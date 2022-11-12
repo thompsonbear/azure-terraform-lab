@@ -25,7 +25,7 @@ locals {
 }
 
 resource "azurerm_resource_group" "lab-rg" {
-  name     = "WindowsLab${var.suffix}"
+  name     = "Lab${var.labnum}"
   location = "eastus2"
   tags = {
     environment = "lab"
@@ -33,7 +33,7 @@ resource "azurerm_resource_group" "lab-rg" {
 }
 
 resource "azurerm_virtual_network" "lab-vnet" {
-  name                = "vnet-windowslab-${var.suffix}"
+  name                = "vnet-lab${var.labnum}"
   address_space       = ["10.${var.vnetoctet}.0.0/16"]
   location            = azurerm_resource_group.lab-rg.location
   resource_group_name = azurerm_resource_group.lab-rg.name
@@ -44,14 +44,14 @@ resource "azurerm_virtual_network" "lab-vnet" {
 }
 
 resource "azurerm_subnet" "lab-snet" {
-  name                 = "snet-windowslab-${var.suffix}"
+  name                 = "snet-lab${var.labnum}"
   resource_group_name  = azurerm_resource_group.lab-rg.name
   virtual_network_name = azurerm_virtual_network.lab-vnet.name
   address_prefixes     = ["10.${var.vnetoctet}.1.0/24"]
 }
 
 resource "azurerm_network_security_group" "lab-nsg" {
-  name                = "nsg-windowslab-${var.suffix}"
+  name                = "nsg-lab${var.labnum}"
   location            = azurerm_resource_group.lab-rg.location
   resource_group_name = azurerm_resource_group.lab-rg.name
 
@@ -78,7 +78,8 @@ resource "azurerm_subnet_network_security_group_association" "lab-nsgassociation
 }
 
 resource "azurerm_public_ip" "lab-pip" {
-  name                = "pip-windowslab-${var.suffix}"
+  count               = var.vmnum
+  name                = "pip-lab${var.labnum}-${count.index}"
   resource_group_name = azurerm_resource_group.lab-rg.name
   location            = azurerm_resource_group.lab-rg.location
   allocation_method   = "Static"
@@ -89,7 +90,8 @@ resource "azurerm_public_ip" "lab-pip" {
 }
 
 resource "azurerm_network_interface" "lab-nic" {
-  name                = "nic-windowslab-${var.suffix}"
+  count               = var.vmnum
+  name                = "nic-lab${var.labnum}-${count.index}"
   location            = azurerm_resource_group.lab-rg.location
   resource_group_name = azurerm_resource_group.lab-rg.name
 
@@ -98,7 +100,7 @@ resource "azurerm_network_interface" "lab-nic" {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.lab-snet.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.lab-pip.id
+    public_ip_address_id          = azurerm_public_ip.lab-pip[count.index].id
 
   }
 }
@@ -106,10 +108,10 @@ resource "azurerm_network_interface" "lab-nic" {
 resource "azurerm_virtual_machine" "lab-vm" {
   count = var.vmnum
 
-  name                  = "vm-lab${var.suffix}-${count.index}"
+  name                  = "vm-lab${var.labnum}-${count.index}"
   location              = azurerm_resource_group.lab-rg.location
   resource_group_name   = azurerm_resource_group.lab-rg.name
-  network_interface_ids = [azurerm_network_interface.lab-nic.id]
+  network_interface_ids = [azurerm_network_interface.lab-nic[count.index].id]
   vm_size               = "Standard_D2s_v3"
 
   delete_os_disk_on_termination    = true
@@ -122,13 +124,13 @@ resource "azurerm_virtual_machine" "lab-vm" {
     version   = "latest"
   }
   storage_os_disk {
-    name              = "osdisk-windowslab-${var.suffix}"
+    name              = "osdisk-lab${var.labnum}-${count.index}"
     caching           = "ReadWrite"
     create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
   }
   os_profile {
-    computer_name  = "vm-lab${var.suffix}-${count.index}"
+    computer_name  = "vm-lab${var.labnum}-${count.index}"
     admin_username = var.admin_username
     admin_password = var.admin_password
   }

@@ -1,5 +1,6 @@
-variable "suffix" {
-  default = "1"
+variable "labnum" {
+  default     = "1"
+  description = "Lab number for naming"
 }
 
 variable "vnetoctet" {
@@ -10,10 +11,11 @@ variable "vnetoctet" {
 
 variable "vmnum" {
   type        = number
-  description = "Number of VMs to create"
+  description = "Number of VMs to provision"
 }
 
 variable "admin_username" {
+default = "azadmin"
   description = "Local admin username for VMs"
 }
 
