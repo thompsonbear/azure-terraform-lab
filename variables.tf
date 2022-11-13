@@ -1,3 +1,13 @@
+variable "location" {
+  default     = "eastus2"
+  description = "Azure region to deploy VMs"
+}
+
+variable "vmsize" {
+  default     = "Standard_D2s_v3"
+  description = "Azure VMs sizing SKU"
+}
+
 variable "labnum" {
   default     = "1"
   description = "Lab number for naming"
@@ -15,7 +25,7 @@ variable "vmnum" {
 }
 
 variable "admin_username" {
-default = "azadmin"
+  default     = "azadmin"
   description = "Local admin username for VMs"
 }
 

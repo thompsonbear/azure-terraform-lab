@@ -25,8 +25,8 @@ locals {
 }
 
 resource "azurerm_resource_group" "lab-rg" {
-  name     = "Lab${var.labnum}"
-  location = "eastus2"
+  name     = "AzureTFLab${var.labnum}"
+  location = var.location
   tags = {
     environment = "lab"
   }
@@ -103,6 +103,9 @@ resource "azurerm_network_interface" "lab-nic" {
     public_ip_address_id          = azurerm_public_ip.lab-pip[count.index].id
 
   }
+  tags = {
+    environment = "lab"
+  }
 }
 
 resource "azurerm_virtual_machine" "lab-vm" {
@@ -112,7 +115,7 @@ resource "azurerm_virtual_machine" "lab-vm" {
   location              = azurerm_resource_group.lab-rg.location
   resource_group_name   = azurerm_resource_group.lab-rg.name
   network_interface_ids = [azurerm_network_interface.lab-nic[count.index].id]
-  vm_size               = "Standard_D2s_v3"
+  vm_size               = var.vmsize
 
   delete_os_disk_on_termination    = true
   delete_data_disks_on_termination = true
@@ -138,4 +141,9 @@ resource "azurerm_virtual_machine" "lab-vm" {
   tags = {
     environment = "lab"
   }
+}
+
+output "vm_pips" {
+  description = "VM Public IPs"
+  value       = ["${azurerm_public_ip.lab-pip.*.ip_address}"]
 }
